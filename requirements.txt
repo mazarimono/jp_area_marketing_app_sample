@@ -1,0 +1,17 @@
+streamlit
+pandas
+geopandas
+numpy
+shapely
+six
+fiona
+pyproj
+matplotlib
+plotly
+rtree
+geopy
+folium
+streamlit-folium
+branca
+jinja2
+requests
