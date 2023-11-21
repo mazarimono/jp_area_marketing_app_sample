@@ -123,8 +123,10 @@ with st.sidebar:
         market_size = st.slider(label='エリアサイズ（m）', min_value=500, max_value=5000, step=1, value=1000)
         select_point = Point(lon_fl, lat_fl)
         sel_gdf = gpd.GeoDataFrame(geometry=[select_point], crs='EPSG:4326')
-        tf = toflat.ToFlat(sel_gdf)
-        sel_gdf = tf.to_flat()
+        # ToFlatがうまく働かないので（streamlit cloudで変更）
+        # tf = toflat.ToFlat(sel_gdf)
+        # sel_gdf = tf.to_flat()
+        sel_gdf = sel_gdf.to_crs('EPSG:6674')
         buff = sel_gdf.loc[0, 'geometry'].buffer(market_size)
         sel_gdf.loc[1, 'geometry'] = buff
         sel_gdf = sel_gdf.to_crs('EPSG:4326')
