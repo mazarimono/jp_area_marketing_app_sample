@@ -177,8 +177,10 @@ if area_set:
     col1.write('エリア指定と重複するデータ')
     col1.write(market_df)
 
-    col2.write('重複する医療機関の専門')
-    col2.write(picked_iryo.head(10))
+    if iryo:
+
+        col2.write('重複する医療機関の専門')
+        col2.write(picked_iryo.head(10))
 
 
 if st.checkbox("データ出典: "):
