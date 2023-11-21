@@ -15,4 +15,3 @@ streamlit-folium
 branca
 jinja2
 requests
-toflat

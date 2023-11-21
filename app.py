@@ -4,7 +4,7 @@ import pandas as pd
 import plotly.figure_factory as ff
 import streamlit as st
 from shapely.geometry import Point
-from toflat import toflat
+
 
 st.set_page_config(layout="wide")
 
