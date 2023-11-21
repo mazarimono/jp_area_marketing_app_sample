@@ -4,9 +4,10 @@ import pandas as pd
 import plotly.figure_factory as ff
 import streamlit as st
 from shapely.geometry import Point
+from collections import Counter
 
 
-st.set_page_config(layout="wide")
+st.set_page_config(layout="wide", page_title='長目　エリアマーケティング')
 
 # Setting Data Path:
 
@@ -80,6 +81,7 @@ def make_fig(
         fig.add_scattermapbox(
             lat=_df2.geometry.y,
             lon=_df2.geometry.x,
+            hovertext=_df2['P04_002'],
             marker={"color": "green", "opacity": 0.8},
         )
     if area_set:
@@ -99,6 +101,31 @@ def make_fig(
             line={'width': 5}
         )
     return fig
+
+def add_market_size(gdf: gpd.GeoDataFrame, change_crs: str, market_size: int) -> gpd.GeoDataFrame:
+    '''
+    market_sizeで指定された円のデータをgdfに加える関数
+    '''
+    gdf = gdf.to_crs(change_crs)
+    buff = gdf.loc[0, 'geometry'].buffer(market_size).minimum_rotated_rectangle
+    gdf.loc[1, 'geometry'] = buff
+    gdf = gdf.to_crs('EPSG:4326')
+    return gdf
+
+
+def market_data(_base_df: gpd.GeoDataFrame, _sel_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    '''
+    market内にあるデータを抽出する関数
+    '''
+    market_circle = _sel_df.loc[1, 'geometry']
+    sel_index = _base_df.sindex.intersection(market_circle.bounds)
+    _market_df = _base_df.iloc[sel_index, :-1]
+    return _market_df
+
+
+def iryo_market_data(_iryo_df: gpd.GeoDataFrame, _sel_df: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+    df = market_data(_iryo_df, _sel_df)
+    return df
 
 
 # Views
@@ -123,13 +150,13 @@ with st.sidebar:
         market_size = st.slider(label='エリアサイズ（m）', min_value=500, max_value=5000, step=1, value=1000)
         select_point = Point(lon_fl, lat_fl)
         sel_gdf = gpd.GeoDataFrame(geometry=[select_point], crs='EPSG:4326')
-        # ToFlatがうまく働かないので（streamlit cloudで変更）
-        # tf = toflat.ToFlat(sel_gdf)
-        # sel_gdf = tf.to_flat()
-        sel_gdf = sel_gdf.to_crs('EPSG:6674')
-        buff = sel_gdf.loc[0, 'geometry'].buffer(market_size)
-        sel_gdf.loc[1, 'geometry'] = buff
-        sel_gdf = sel_gdf.to_crs('EPSG:4326')
+        sel_gdf = add_market_size(sel_gdf, 'EPSG:6674', market_size)
+        market_df = market_data(df, sel_gdf)
+        if iryo:
+            iryo_market_df = iryo_market_data(iryo_df, sel_gdf)
+            iryo1 = iryo_market_df['P04_004'].values
+            iryo1 = [item for i2 in iryo1 for item in i2.split('　')]
+            picked_iryo = pd.DataFrame(Counter(iryo1).items(), columns=['name', 'count']).sort_values('count', ascending=False).reset_index(drop=True)
 
 
 
@@ -144,8 +171,14 @@ else:
     fig = make_fig(df, iryo_df, select_col, n_hex, iryo, area_set)
 st.plotly_chart(fig)
 
-if st.checkbox("show data"):
-    st.write(df)
+if area_set:
+    col1, col2 = st.columns(2)
+
+    col1.write('エリア指定と重複するデータ')
+    col1.write(market_df)
+
+    col2.write('重複する医療機関の専門')
+    col2.write(picked_iryo.head(10))
 
 
 if st.checkbox("データ出典: "):
