@@ -132,7 +132,7 @@ def iryo_market_data(_iryo_df: gpd.GeoDataFrame, _sel_df: gpd.GeoDataFrame) -> g
 
 # sidebar view
 with st.sidebar:
-    option = st.selectbox(label="表示データ選択", options=list(data_dict.keys()))
+    option = st.selectbox(label="データ源選択", options=list(data_dict.keys()))
     data_path = data_dict[option]
     data_load_state = st.text("データをロードしています…")
     df = load_data(data_path)
@@ -157,13 +157,89 @@ with st.sidebar:
             iryo1 = iryo_market_df['P04_004'].values
             iryo1 = [item for i2 in iryo1 for item in i2.split('　')]
             picked_iryo = pd.DataFrame(Counter(iryo1).items(), columns=['name', 'count']).sort_values('count', ascending=False).reset_index(drop=True)
-
-
+    st.divider()
+    st.link_button('長目をXでフォローする', 'https://twitter.com/hijichomoku')
 
 
 # site main view
-st.header("長目: エリアマーケティングアプリ")
-st.subheader("（サンプル: 京都市のみ）")
+st.header("長目: みちび　デモサイト")
+st.subheader("（データ: 京都市のみ）")
+
+col1, col2 = st.columns((3,1))
+with col2:
+    torisetsu_toggle = st.toggle('使い方を見る', value=False)
+
+if torisetsu_toggle:
+    st.header('みちび: 使い方 :sunglasses:', divider='rainbow')
+    st.markdown('''
+        みちびはその地域の情報を提供するツールです。    
+        このデモサイトでは京都市のデータのみとなっていますが、ご希望により地域、    
+        ここで表示できるデータ以外のデータも扱えます。    
+        各機能の使い方はチェックボックスをチェックすると確認できます！:sunglasses:     
+        **お問い合わせは、[長目のフォームよりどうぞ！](https://www.chomoku.info/contact)。**    
+    ''')
+
+    st.divider()
+
+    data_sources = st.checkbox('**データの変更方法**')
+    if data_sources:
+        st.markdown('''
+            みちびのデモでは次の情報が得られます。    
+            
+            - 地域の住民数（国勢調査）
+            - 地域の住民数推計値（人口推計）
+            - 地域の地価（地価評価）
+            
+            これらは左にある「データ源選択」から選べます。    
+            それぞれのデータは複数のデータを持っています。それらは「表示データ選択」で選べます。
+        ''')
+
+        st.image('img/michibi-sidebar.png')
+    st.divider()
+
+    iryo_sources = st.checkbox('**医療機関データの表示**')
+    if iryo_sources:
+        st.markdown('''
+        みちびでは、個別の店舗などのデータも取得できます。    
+        デモでは医療機関のデータを見ることが出来ます。    
+        医療機関のデータを地図に載せる場合は、左の医療機関データのチェックボックスをチェックしてください。
+        チェックすると、地図上に医療機関を表す緑の点が表示されます。
+        ''')
+
+        st.markdown('医療機関データをチェックすると、')
+        st.image('img/michibi-iryo-on.png')
+        st.markdown('地図上に医療機関のデータが表示される')
+        st.image('img/michibi-iryo-map.png')
+    st.divider()
+
+    area_check_box = st.checkbox('**エリア指定の使い方**')
+    if area_check_box:
+        st.markdown('''
+        みちびでは、位置を指定して周辺データを取得できます。    
+        左のエリア指定のチェックボックスをチェックすると地図上に、中心点を示す青い丸と、
+        観測エリアを示す赤い四角が表示されます。   
+        地図の下には指定したエリアのデータが表示されます。
+        ''')
+
+        st.markdown('**エリア指定をチェックすると**')
+        st.image('img/michibi-area-on.png')
+        st.markdown('**地図上に丸と四角が表示される**')
+        st.image('img/michibi-area-on-map.png')
+        st.markdown('**地図の下には指定エリアの情報を表示**')
+        st.image('img/michibi-area-on-df.png')
+
+        st.markdown('''
+        みちびでは、指定のエリア範囲を変更することも容易です。    
+        このアプリでは経度緯度をスライダーで動かすことにより、指定のエリアを変更できます（実際は住所での指定が可能ですが、デモでは経度緯度のみの指定としています）。
+        範囲もエリアサイズのスライダーを動かすことで変更できます。
+        ''')
+
+        st.markdown('**各スライダーを動かすことで地域の指定範囲を変更できる**')
+        st.image('img/michibi-area-change.png')
+        st.markdown('**選択範囲が更新される**')
+        st.image('img/michibi-area-change-map.png')
+    st.divider()
+
 # graph
 if area_set:
     fig = make_fig(df, iryo_df, select_col, n_hex, iryo, area_set, sel_gdf, lon_fl, lat_fl)
